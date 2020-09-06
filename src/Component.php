@@ -180,8 +180,10 @@ class Component {
                 }
 
                 // Now we have it we can insert our fragment into the main dom
+	            // Strip off extra added span tags
+	            $xml_cropped = substr($xml, strlen('<span>'), strlen($xml) - strlen('<span></span>'));
                 $newNode = $node->ownerDocument->createDocumentFragment( );
-                $newNode->appendXML($xml);
+                $newNode->appendXML($xml_cropped);
                 $node->parentNode->replaceChild( $newNode, $node );
             }
 		}
