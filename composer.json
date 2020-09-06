@@ -1,5 +1,5 @@
 {
-	"name": "rossriley/php-vuejs-templating",
+	"name": "somewhatcloudy/php-vuejs-templating",
 	"description": "PHP implementation of Vue.js templating engine",
 	"type": "library",
 	"authors": [
