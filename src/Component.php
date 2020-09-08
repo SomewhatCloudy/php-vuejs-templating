@@ -62,6 +62,36 @@ class Component {
 	}
 
 	/**
+	 * Get data via dot notation.
+	 *
+	 * Scans through structure to product, e.g. item.text
+	 *
+	 * @param $data
+	 * @param $search
+	 */
+	protected function fetchData ($data, $search)
+	{
+		$list = explode('.', $search);
+		$first = array_shift($list);
+		$variable = isset($data[$first]) ? $data[$first] : null;
+
+		// No dot, return as normal.
+		if (count($list) <= 1)
+		{
+			return $variable;
+		}
+
+		// No array/obj, cannot recurse
+		if (!is_array($variable) && !is_object($variable))
+		{
+			return null;
+		}
+
+		// Recurse
+		return $this->fetchData($variable, implode('.', $list));
+	}
+
+	/**
 	 * @param string $template HTML
 	 *
 	 * @return DOMDocument
@@ -340,7 +370,7 @@ class Component {
 
 			$newNode = $node->cloneNode( true );
 
-			$this->appendHTML( $newNode, $data[$variableName] );
+			$this->appendHTML( $newNode, $this->fetchData($data, $variableName));
 
 			$node->parentNode->replaceChild( $newNode, $node );
 		}

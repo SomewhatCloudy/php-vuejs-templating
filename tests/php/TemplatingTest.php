@@ -66,9 +66,16 @@ class TemplatingTest extends PHPUnit_Framework_TestCase {
 	 * @test
 	 */
 	public function templateWithSingleMustacheVariable_ReplacesVariableWithGivenValue() {
-		$result = $this->createAndRender( '<p>{{value}}</p>', [ 'value' => 'some value' ] );
 
+		// Simple
+		$result = $this->createAndRender( '<p>{{value}}</p>', [ 'value' => 'some value' ] );
 		assertThat( $result, is( equalTo( '<p>some value</p>' ) ) );
+
+		// Complex
+		$result2 = $this->createAndRender( '<p>{{item.value}}</p>', [ 'item' => ['value' => 'some value' ]] );
+		assertThat( $result2, is( equalTo( '<p>some value</p>' ) ) );
+
+		rand();
 	}
 
 	/**
