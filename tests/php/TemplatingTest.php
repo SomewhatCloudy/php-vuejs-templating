@@ -106,6 +106,30 @@ class TemplatingTest extends PHPUnit_Framework_TestCase {
 
 	/**
 	 * @test
+	 */
+	public function templateWithComponentInjection ()
+	{
+		$self = $this;
+		$data = [
+			'title' => 'This is this!'
+		];
+		$expected = '<div class="component"><div class="inside"><p>This is this!</p><p>12345</p></div></div>';
+		$template = '<div class="component"><component :is="\'test-component\'" :title="title" :id="\'12345\'"></component></div>';
+
+		//
+		$templating = new Templating();
+		$templating->addComponent('test-component', function ($properties) use ($data, $self) {
+			$inner =  $self->createAndRender('<div class="inside"><p>{{title}}</p><p>{{id}}</p></div>', $properties);
+
+			return $inner;
+		});
+		$result =  $templating->render( $template, $data );
+
+		self::assertXmlStringEqualsXmlString($expected, $result);
+	}
+
+	/**
+	 * @test
 	 *
 	 * @note This doesnt and probably shouldn't throw.
 	 */

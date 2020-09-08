@@ -36,6 +36,12 @@ class Component {
 	 */
 	private $expressionParser;
 
+	/** @var callable[] */
+	protected $components;
+
+	/** @var DOMDocument */
+	protected $document;
+
 	/**
 	 * @param string $template HTML
 	 * @param callable[] $filters
@@ -48,12 +54,23 @@ class Component {
 	}
 
 	/**
+	 * Add Vue dynamic components.
+	 *
+	 * @param array $components
+	 */
+	public function addComponents (array $components)
+	{
+		$this->components = $components;
+	}
+
+	/**
 	 * @param array $data
 	 *
 	 * @return string
 	 */
 	public function render( array $data ) {
 		$document = $this->parseHtml( $this->template );
+		$this->document = $document;
 
 		$rootNode = $this->getRootNode( $document );
 		$this->handleNode( $rootNode, $data );
@@ -124,6 +141,7 @@ class Component {
                 $this->replaceShowWithIf($node->childNodes);
 				$this->handleAttributeBinding( $node, $data );
 				$this->handleIf( $node->childNodes, $data );
+				$this->handleComponent($node, $data);
 
 				foreach ( iterator_to_array( $node->childNodes ) as $childNode ) {
 					$this->handleNode( $childNode, $data );
@@ -289,6 +307,50 @@ class Component {
 		foreach ( $nodesToRemove as $node ) {
 			$this->removeNode( $node );
 		}
+	}
+
+	/**
+	 * Handle dynamic vue components
+	 *
+	 * @param DOMNode $node
+	 * @param         $data
+	 */
+	protected function handleComponent (DOMNode $node, $data)
+	{
+		// Not a component
+		if ($node->tagName !== 'component') return;
+
+		// Validate props
+		$is = $node->getAttribute('is');
+		if (!$is)
+		{
+			throw new Exception("No :is property for dynamic component");
+		}
+
+		//
+		$components = $this->components;
+		if (!array_key_exists($is, $components))
+		{
+			throw new Exception("No dynamic component for ({$is})");
+		}
+		$component = $components[$is];
+
+		// Build attrs
+		$attrs = [];
+		for($i=0; $i<$node->attributes->length; $i++)
+		{
+			/** @var DOMAttr $domattr */
+			$domattr = $node->attributes->item($i);
+			$attrs[$domattr->name] = $domattr->value;
+		}
+
+		// Call component
+		$html = $component($attrs);
+		$parsed = $this->parseHtml($html);
+		$new_node = $this->getRootNode($parsed);
+
+		$importable = $node->ownerDocument->importNode($new_node, true);
+		$node->parentNode->replaceChild($importable, $node);
 	}
 
 	private function handleFor( DOMNode $node, array $data ) {
