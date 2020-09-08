@@ -62,36 +62,6 @@ class Component {
 	}
 
 	/**
-	 * Get data via dot notation.
-	 *
-	 * Scans through structure to product, e.g. item.text
-	 *
-	 * @param $data
-	 * @param $search
-	 */
-	protected function fetchData ($data, $search)
-	{
-		$list = explode('.', $search);
-		$first = array_shift($list);
-		$variable = isset($data[$first]) ? $data[$first] : null;
-
-		// No dot, return as normal.
-		if (count($list) <= 1)
-		{
-			return $variable;
-		}
-
-		// No array/obj, cannot recurse
-		if (!is_array($variable) && !is_object($variable))
-		{
-			return null;
-		}
-
-		// Recurse
-		return $this->fetchData($variable, implode('.', $list));
-	}
-
-	/**
 	 * @param string $template HTML
 	 *
 	 * @return DOMDocument
@@ -148,6 +118,7 @@ class Component {
 			$this->stripEventHandlers( $node );
 			$this->handleFor( $node, $data );
 			$this->handleRawHtml( $node, $data );
+			$this->handleVModel( $node, $data );
 
 			if ( !$this->isRemovedFromTheDom( $node ) ) {
                 $this->replaceShowWithIf($node->childNodes);
@@ -369,8 +340,35 @@ class Component {
 			$node->removeAttribute( 'v-html' );
 
 			$newNode = $node->cloneNode( true );
+			$value = $this->evaluateExpression( $variableName, $data );
 
-			$this->appendHTML( $newNode, $this->fetchData($data, $variableName));
+			$this->appendHTML( $newNode, $value);
+
+			$node->parentNode->replaceChild( $newNode, $node );
+		}
+	}
+
+	/**
+	 * Handle v-model
+	 *
+	 * @param DOMNode $node
+	 * @param array   $data
+	 */
+	private function handleVModel( DOMNode $node, array $data ) {
+		if ( $this->isTextNode( $node ) ) {
+			return;
+		}
+
+		/** @var DOMElement $node */
+		if ( $node->hasAttribute( 'v-model' ) ) {
+			$variableName = $node->getAttribute( 'v-model' );
+			$node->removeAttribute( 'v-model' );
+
+			$newNode = $node->cloneNode( true );
+			$value = $this->evaluateExpression( $variableName, $data );
+
+//			$this->appendHTML( $newNode, $value);
+			$node->textContent = $value;
 
 			$node->parentNode->replaceChild( $newNode, $node );
 		}

@@ -80,6 +80,32 @@ class TemplatingTest extends PHPUnit_Framework_TestCase {
 
 	/**
 	 * @test
+	 */
+	public function templateWithArrayLength ()
+	{
+		$array = [1, 2, 3];
+		$expected = "<p>3</p>";
+
+		// Mustache replace
+		$result = $this->createAndRender('<p>{{list.length}}</p>', ['list' => $array]);
+		self::assertEquals($expected, $result);
+	}
+
+	/**
+	 * @test
+	 */
+	public function templateWithArrayLengthVModel ()
+	{
+		$array = [1, 2, 3];
+		$expected = "<p>3</p>";
+
+		//
+		$result = $this->createAndRender('<p v-model="list.length"></p>', ['list' => $array]);
+		self::assertEquals($expected, $result);
+	}
+
+	/**
+	 * @test
 	 *
 	 * @note This doesnt and probably shouldn't throw.
 	 */
